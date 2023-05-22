@@ -1,29 +1,58 @@
 <script setup>
-import TodoCreator from '../components/TodoCreator.vue';
-import {uid} from "uid"
-import { ref } from 'vue';
+import { uid } from "uid";
+import { ref } from "vue";
+import TodoCreator from "../components/TodoCreator.vue";
+import TodoItem from "../components/TodoItem.vue";
+import { Icon } from "@iconify/vue";
 
 const todoList = ref([]);
-const createTodo= (todoData)=>{
+const createTodo = (todo) => {
   todoList.value.push({
-    id:uid(),
-    todoData,
-    isCompleted:null,
-    isEditing:null,
-  })
+    id: uid(),
+    todo,
+    isCompleted: false,
+    isEditing: null,
+  });
+};
+const toggleComplete=(todoPos)=>{
+  todoList.value[todoPos].isCompleted = !todoList.value[todoPos].isCompleted;
+
 }
 
+const toggleEditTodo =(todoPos)=>{
+  todoList.value[todoPos].isEditing = !todoList.value[todoPos].isEditing;
+
+  
+}
+
+const updateTodo =(todoVal,todoPos)=>{
+  todoList.value[todoPos].todo=todoVal;
+
+}
+
+const deleteTodo=(todoId)=>{
+  todoList.value= todoList.value.filter((todo)=>todo.id !== todoId)
+
+}
 </script>
 
 <template>
   <main>
     <h1>Create Todo</h1>
-    <TodoCreator @create-todo="createTodo"/>
- 
+    <TodoCreator @create-todo="createTodo">
+      <template #button-content>Create</template>
+    </TodoCreator>
+    <ul class="todo-list" v-if="todoList.length > 0">
+      <TodoItem v-for="(todo, index) in todoList" :todo="todo" :index="index" @toggle-complete="toggleComplete" @edit-todo="toggleEditTodo" @update-todo="updateTodo"  @delete-todo="deleteTodo"/>
+    </ul>
+    <p v-else class="todos-msg">
+      <Icon icon="noto-v1:sad-but-relieved-face" />
+      <span>You have no todo's to complete! Add one!</span>
+    </p>
   </main>
 </template>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 main {
   display: flex;
   flex-direction: column;
@@ -36,6 +65,21 @@ main {
     margin-bottom: 16px;
     text-align: center;
   }
+
+  .todo-list {
+    display: flex;
+    flex-direction: column;
+    list-style: none;
+    margin-top: 24px;
+    gap: 20px;
+  }
+
+  .todos-msg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 24px;
+  }
 }
-  
 </style>
