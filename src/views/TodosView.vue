@@ -1,11 +1,30 @@
 <script setup>
+import { Icon } from "@iconify/vue";
 import { uid } from "uid";
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import TodoCreator from "../components/TodoCreator.vue";
 import TodoItem from "../components/TodoItem.vue";
-import { Icon } from "@iconify/vue";
 
 const todoList = ref([]);
+
+const todosCompleted = computed(() => {
+  return todoList.value.every((todo) => todo.isCompleted);
+});
+
+const fetchTodoList = () => {
+  const savedTodoList = JSON.parse(localStorage.getItem("todoList"));
+  if (savedTodoList) {
+    todoList.value = savedTodoList;
+  }
+};
+
+// Fetch Todo's on page load
+fetchTodoList();
+
+const setTodoListLocalStorage = () => {
+  localStorage.setItem("todoList", JSON.stringify(todoList.value));
+};
+
 const createTodo = (todo) => {
   todoList.value.push({
     id: uid(),
@@ -13,27 +32,30 @@ const createTodo = (todo) => {
     isCompleted: false,
     isEditing: null,
   });
+  setTodoListLocalStorage();
 };
-const toggleComplete=(todoPos)=>{
-  todoList.value[todoPos].isCompleted = !todoList.value[todoPos].isCompleted;
 
-}
-
-const toggleEditTodo =(todoPos)=>{
+const toggleEditTodo = (todoPos) => {
   todoList.value[todoPos].isEditing = !todoList.value[todoPos].isEditing;
+  setTodoListLocalStorage();
+};
 
-  
-}
+const updateTodo = (todoVal, todoPos) => {
+  todoList.value[todoPos].todo = todoVal;
+  setTodoListLocalStorage();
+};
 
-const updateTodo =(todoVal,todoPos)=>{
-  todoList.value[todoPos].todo=todoVal;
+const toggleTodoComplete = (todoPos) => {
+  todoList.value[todoPos].isCompleted = !todoList.value[todoPos].isCompleted;
+  setTodoListLocalStorage();
+};
 
-}
-
-const deleteTodo=(todoId)=>{
-  todoList.value= todoList.value.filter((todo)=>todo.id !== todoId)
-
-}
+const deleteTodo = (todo) => {
+  todoList.value = todoList.value.filter(
+    (todoFilter) => todoFilter.id !== todo.id
+  );
+  setTodoListLocalStorage();
+};
 </script>
 
 <template>
@@ -43,11 +65,23 @@ const deleteTodo=(todoId)=>{
       <template #button-content>Create</template>
     </TodoCreator>
     <ul class="todo-list" v-if="todoList.length > 0">
-      <TodoItem v-for="(todo, index) in todoList" :todo="todo" :index="index" @toggle-complete="toggleComplete" @edit-todo="toggleEditTodo" @update-todo="updateTodo"  @delete-todo="deleteTodo"/>
+      <TodoItem
+        v-for="(todo, index) in todoList"
+        :todo="todo"
+        :index="index"
+        @edit-todo="toggleEditTodo"
+        @update-todo="updateTodo"
+        @toggle-complete="toggleTodoComplete"
+        @delete-todo="deleteTodo"
+      />
     </ul>
     <p v-else class="todos-msg">
       <Icon icon="noto-v1:sad-but-relieved-face" />
       <span>You have no todo's to complete! Add one!</span>
+    </p>
+    <p v-if="todosCompleted && todoList.length > 0" class="todos-msg">
+      <Icon icon="noto-v1:party-popper" />
+      <span>You have completed all your todos!</span>
     </p>
   </main>
 </template>
